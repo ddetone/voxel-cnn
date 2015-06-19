@@ -1,3 +1,4 @@
 data/
 *.mat
 *.h5
+*.mexa64

@@ -1,74 +1,52 @@
-% function net_surgery()
+caffe.reset_all()
+clear all
 
-addpath('/home/ddetone/code/caffe/matlab/caffe')
+caffe.set_mode_gpu();
+caffe.set_device(0);
 
-CAFFE = '/home/ddetone/code/caffe';
-NET_SURG = '/home/ddetone/code/voxel-convnet/caffe-scripts/net_surgery/';
+proj = '../proto/two_layer_conv/';
 
-fc_model_file = [NET_SURG 'standard.prototxt'];
-conv_model_file = [NET_SURG 'fully_conv.prototxt'];
-weights_file = [NET_SURG '_iter_5000.caffemodel'];
-% fc_model_file = [CAFFE '/models/bvlc_reference_caffenet/deploy.prototxt'];
-% conv_model_file = [CAFFE '/examples/net_surgery/bvlc_caffenet_full_conv.prototxt'];
-% weights_file = [CAFFE '/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel'];
+standard_weights = [proj 'snapshot/standard_iter_60000.caffemodel'];
+standard_file = [proj 'standard.prototxt'];
+s_net = caffe.Net(standard_file, standard_weights, 'test');
 
-net = CaffeNet3D.instance(fc_model_file, weights_file);
-p_fc.ip1 = net.get_layer_weights('ip1');
-p_fc.ip2 = net.get_layer_weights('ip2');
-print_params(p_fc);
+fully_conv_file = [proj 'fully_conv.prototxt'];
+fc_net = caffe.Net(fully_conv_file, standard_weights, 'test');
 
-net = CaffeNet3D.instance(conv_model_file, weights_file);
-p_conv.ip1_conv = net.get_layer_weights('ip1-conv');
-p_conv.ip2_conv = net.get_layer_weights('ip2-conv');
-print_params(p_conv);
+p_s.fc3.weights = s_net.params('fc3',1).get_data();
+p_s.fc3.bias = s_net.params('fc3',2).get_data();
+p_s.fc4.weights = s_net.params('fc4',1).get_data();
+p_s.fc4.bias = s_net.params('fc4',2).get_data();
 
-p_conv.ip1_conv{1}(:) = p_fc.ip1{1}(:);
-p_conv.ip1_conv{2}(:) = p_fc.ip1{2}(:);
-net.set_layer_weights('ip1-conv', p_conv.ip1_conv);
-p_conv.ip2_conv{1}(:) = p_fc.ip2{1}(:);
-p_conv.ip2_conv{2}(:) = p_fc.ip2{2}(:);
-net.set_layer_weights('ip2-conv', p_conv.ip2_conv);
+p_fc.fc3_conv.weights = fc_net.params('fc3-conv',1).get_data();
+p_fc.fc3_conv.bias = fc_net.params('fc3-conv',2).get_data();
+p_fc.fc4_conv.weights = fc_net.params('fc4-conv',1).get_data();
+p_fc.fc4_conv.bias = fc_net.params('fc4-conv',2).get_data();
 
-load('/home/ddetone/code/voxel-convnet/data/mdb10_dim16_BO.mat');
-N = size(mdb.data,4)
-pred = zeros(N,1);
-for i=1:N
-    
-    idx = i;
-    mdl = mdb.data(:,:,:,idx);
-%     im = imread('hot-dog.jpg');
-    
-%     figure(1) 
-%     subplot(1,2,1)
-%     [X,Y,Z]=ind2sub(size(mdl),find(mdl(:)));
-%     plot3(X,Y,Z,'.');
-%     axis equal;
-%     xlim([0 dim])
-%     ylim([0 dim])
-%     zlim([0 dim])
-%     xlabel('x');
-%     ylabel('y');
-%     zlabel('z');
-    
-    load('dataset_mean.mat');
-%     Transpose so N x C x H x W x D
-    mdl = permute(mdl, [4 5 1 2 3]);
-    mean_image = permute(mean_image, [4 5 1 2 3]);
-%     Transpose for caffe D x H x W x C x N
-    mdl = permute(mdl, [5 4 3 2 1]);
-    mean_image = permute(mean_image, [5 4 3 2 1]);
-    mdl = mdl - mean_image;
+% transplant fully-connected layer weights in fully convolutional
+p_fc.fc3_conv.weights(:) = p_s.fc3.weights(:);
+p_fc.fc3_conv.bias(:) = p_s.fc3.bias(:);
+fc_net.params('fc3-conv',1).set_data(p_fc.fc3_conv.weights);
+p_fc.fc4_conv.weights(:) = p_s.fc4.weights(:);
+p_fc.fc4_conv.bias(:) = p_s.fc4.bias(:);
+fc_net.params('fc4-conv',1).set_data(p_fc.fc4_conv.weights);
 
-    input_data = {single(mdl)};
-    scores = net.forward(input_data);
-
-    scores = scores{1};
-    [~,I] = max(permute(scores, [4 1 2 3]));
-    pred(i) = I-1;
-    guess = get_class_string(I-1);
-    gt = get_class_string(mdb.class(idx));
-    fprintf('pred is: %d (%s),\t actual is: %d (%s) \n',I-1,guess,mdb.class(idx),gt); 
-%     fprintf('idx %d\n', i);
+% transplant into upscore layer
+p_fc.upscore = fc_net.params('upscore',1).get_data();
+F = size(p_fc.upscore, 1);
+Cin = size(p_fc.upscore, 4);
+Cout = size(p_fc.upscore, 5);
+bifilt = upsample_filt(F);
+bifilt = single(bifilt);
+if Cin ~= Cout
+    disp('error');
+else
+    for i=1:Cin
+       p_fc.upscore(:,:,:,i,i) = bifilt; 
+    end
 end
-% end
+fc_net.params('upscore', 1).set_data(p_fc.upscore);
 
+% Save the net
+out_weights_file = [proj 'snapshot/fully_conv_upsamp_blah.caffemodel'];
+fc_net.save(out_weights_file);

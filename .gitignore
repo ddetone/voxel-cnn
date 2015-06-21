@@ -1,4 +1,6 @@
 data/
+snapshot/
+old/
 *.mat
 *.h5
 *.mexa64

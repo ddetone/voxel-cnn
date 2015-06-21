@@ -1,7 +1,7 @@
 # reduce the learning rate after 8 epochs (4000 iters) by a factor of 10
 
 # The train/test net protocol buffer definition
-net: "../proto/two_layer_conv/standard.prototxt"
+net: "../proto/nin_two_layer_conv/standard.prototxt"
 # test_iter specifies how many forward passes the test should carry out.
 # In the case of MNIST, we have test batch size 100 and 100 test iterations,
 # covering the full 10,000 testing images.
@@ -14,14 +14,14 @@ momentum: 0.9
 weight_decay: 0.005
 # The learning rate policy
 lr_policy: "step"
-stepsize: 100
-gamma: 0.9
+stepsize: 200
+gamma: 0.95
 # Display every 100 iterations
 display: 100
 # The maximum number of iterations
-max_iter: 3000
+max_iter: 4000
 # snapshot intermediate results
 snapshot: 1000
-snapshot_prefix: "../proto/two_layer_conv/snapshot/dim20_aug"
+snapshot_prefix: "../proto/nin_two_layer_conv/snapshot/dim20_aug"
 # solver mode: CPU or GPU
 solver_mode: GPU

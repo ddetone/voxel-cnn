@@ -4,13 +4,19 @@ addpath([CAFFE '/matlab/caffe']);
 caffe.set_mode_gpu();
 caffe.set_device(0);
 
-NET_SURG = '../proto/two_layer_conv/';
-model_file = [NET_SURG 'fully_conv_eval.prototxt'];
-weights_file = [NET_SURG 'snapshot/scene_finetune/_iter_1000.caffemodel'];
+SCENE_FOLDER = '../proto/two_layer_conv_scene/';
+model_file = [SCENE_FOLDER 'scene_deploy.prototxt'];
+
+RECOG_FOLDER = '../proto/two_layer_conv/';
+weights_file = [RECOG_FOLDER ...
+    'snapshot/standard_dim20aug_62acc.caffemodel'];
+
+% weights_file = [RECOG_FOLDER ...
+%     'snapshot/scene_finetune/_iter_1000.caffemodel'];
 net = caffe.Net(model_file, weights_file, 'test');
 
 load('03_data.mat','vox');
-input_data = vox - mean(vox(:));
+% input_data = vox - mean(vox(:));
 input_data = {single(input_data)};
 tic
 net.forward(input_data);

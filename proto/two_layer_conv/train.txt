@@ -1,1 +1,1 @@
-../data/hdf5/train_mdb10_dim20.h5
+../data/hdf5/train_mdb10_dim20_100tr.h5

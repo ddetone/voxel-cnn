@@ -4,14 +4,14 @@ clear all
 caffe.set_mode_gpu();
 caffe.set_device(0);
 
-proj = '../proto/two_layer_conv/';
+recog_fold = '../proto/two_layer_conv/';
+recog_weights = [recog_fold 'snapshot/dim20_aug_iter_3000.caffemodel'];
+recog_file = [recog_fold 'train_test.prototxt'];
+s_net = caffe.Net(recog_file, recog_weights, 'test');
 
-standard_weights = [proj 'snapshot/standard_iter_60000.caffemodel'];
-standard_file = [proj 'standard.prototxt'];
-s_net = caffe.Net(standard_file, standard_weights, 'test');
-
-fully_conv_file = [proj 'fully_conv.prototxt'];
-fc_net = caffe.Net(fully_conv_file, standard_weights, 'test');
+scene_fold = '../proto/two_layer_conv_scene/';
+scene_file = [scene_fold 'train_test.prototxt'];
+fc_net = caffe.Net(scene_file, recog_weights, 'test');
 
 p_s.fc3.weights = s_net.params('fc3',1).get_data();
 p_s.fc3.bias = s_net.params('fc3',2).get_data();
@@ -48,5 +48,5 @@ end
 fc_net.params('upscore', 1).set_data(p_fc.upscore);
 
 % Save the net
-out_weights_file = [proj 'snapshot/fully_conv_upsamp_blah.caffemodel'];
+out_weights_file = [scene_fold 'snapshot/fully_conv_upsamp.caffemodel'];
 fc_net.save(out_weights_file);

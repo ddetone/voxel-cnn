@@ -1,4 +1,4 @@
-name: "standard"
+name: "recognition"
 layer {
   name: "data"
   type: "HDF5Data"
@@ -10,6 +10,7 @@ layer {
   hdf5_data_param {
     source: "../proto/two_layer_conv/train.txt"
     batch_size: 50
+    shuffle: true
   }
 }
 layer {
@@ -23,6 +24,7 @@ layer {
   hdf5_data_param {
     source: "../proto/two_layer_conv/test.txt"
     batch_size: 50
+    shuffle: true
   }
 }
 layer {

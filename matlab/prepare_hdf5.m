@@ -1,48 +1,25 @@
-dataset = 'mdb10_dim20';
+dataset = 'mdb10_dim20_100tr';
+load(['../data/' dataset '_aug.mat'])
 load(['../data/' dataset '.mat'])
 
-X = mdb.data;
-y = mdb.class;
-
-% Data augmentation via random rotations
-aug.num = 12;
-aug.deg = 30;
-aug.noise = 3;
-X_aug = zeros(size(repelem(X,1,1,1,aug.num)));
-for i=1:size(X,4)
-    for j=1:aug.num
-        deg = floor(aug.deg*j + aug.noise*randn(1));
-        idx = (i-1)*aug.num + j;
-        disp(sprintf('idx is: %d \t of %d', idx, ...
-            aug.num*size(X,4)));
-        X_aug(:,:,:,idx) = rotate_vox(X(:,:,:,i), ...
-            aug.noise*randn(1), aug.noise*randn(1),deg);
-    end
-end
-y_aug = repelem(y,aug.num,1);
-
 % Split into train and test
-X_train = X_aug(:,:,:,repelem(mdb.set == 0,aug.num,1));
-y_train = y_aug(repelem(mdb.set == 0,aug.num,1));
-X_test = X_aug(:,:,:,repelem(mdb.set == 1,aug.num,1));
-y_test = y_aug(repelem(mdb.set == 1,aug.num,1));
+X_train = X(:,:,:,repelem(mdb.set == 0,aug.num,1));
+y_train = y(repelem(mdb.set == 0,aug.num,1));
+X_test = X(:,:,:,repelem(mdb.set == 1,aug.num,1));
+y_test = y(repelem(mdb.set == 1,aug.num,1));
 
-% Transpose so N x C x H x W x D
-X_train = permute(X_train, [4 5 1 2 3]);
-X_test = permute(X_test, [4 5 1 2 3]);
-
-% Transpose for caffe D x H x W x C x N
-X_train = permute(X_train, [5 4 3 2 1]);
+% Transpose for caffe D x W x H x C x N
+X_train = permute(X_train, [3 2 1 5 4]);
 y_train = permute(y_train, [2 1]);
-X_test = permute(X_test, [5 4 3 2 1]);
+X_test = permute(X_test, [3 2 1 5 4]);
 y_test = permute(y_test, [2 1]);
 
 % % Subtract mean
 % mean_image = mean(X_train, 5); % use training data for mean
 % X_train = X_train - repmat(mean_image,[1,1,1,1,size(X_train,5)]);
 % X_test = X_test - repmat(mean_image,[1,1,1,1,size(X_test,5)]);
-X_train = X_train - mean(X_train(:));
-X_test = X_test - mean(X_train(:));
+% X_train = X_train - mean(X_train(:));
+% X_test = X_test - mean(X_train(:));
 
 % % Create mini train set to overfit to
 % size_mini = 50;

@@ -2,16 +2,16 @@ caffe.reset_all()
 CAFFE = '../caffe';
 addpath([CAFFE '/matlab/caffe']);
 
-NET_SURG = '../proto/two_layer_conv/';
-model_file = [NET_SURG 'fully_conv.prototxt'];
-weights_file = [NET_SURG 'snapshot/fully_conv_upsamp_blah.caffemodel'];
+NET_SURG = '../proto/two_layer_conv_scene/';
+model_file = [NET_SURG 'deploy.prototxt'];
+weights_file = [NET_SURG 'snapshot/fully_conv_upsamp.caffemodel'];
 net = caffe.Net(model_file, weights_file, 'test');
 
 load('02_data.mat');
-input_data = vox - 0.5;
-input_data = {single(input_data)};
+vox = permute(vox, [3 2 1 5 4]);
+
 tic
-scores = net.forward(input_data);
+scores = net.forward({vox});
 toc
 scores = scores{1};
 scores = scores - min(scores(:));
@@ -42,7 +42,7 @@ show_vox(vox_guesses,10)
 colorbar
 for i=1:10
     uicontrol('Style', 'text', ...
-       'String', get_class_string(i-1),... 
+       'String', get_class_string(i-1,false),... 
        'Units','normalized',...
        'Position', [0.91 (i/10) 0.1 0.1]); 
 end

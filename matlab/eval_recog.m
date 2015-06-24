@@ -1,15 +1,14 @@
 caffe.reset_all()
-CAFFE = '../caffe';
-addpath([CAFFE '/matlab/caffe']);
 caffe.set_mode_gpu();
 
-RECOG_FOLDER = '../proto/nin_two_layer_conv/';
+RECOG_FOLDER = '../proto/two_layer_conv/rec/';
 model_file = [RECOG_FOLDER 'deploy.prototxt'];
-weights_file = [RECOG_FOLDER 'snapshot/dim20_aug_iter_3000.caffemodel'];
+weights_file = [RECOG_FOLDER 'snapshot/dim20_iter_5000.caffemodel'];
 net = caffe.Net(model_file, weights_file, 'test');
 ncls = 10;
 
-load('dim20_splits.mat','X_test','y_test');
+dataset = 'mdb10_dim20_100tr';
+load([dataset '_test.mat'],'X_test','y_test');
 N = size(X_test,5);
 batch_size = 50;
 iters = floor(N/batch_size);
@@ -19,7 +18,7 @@ tic
 for i=1:iters
     idx = (i-1)*batch_size+1:(i-1)*batch_size + batch_size;
     input_data = X_test(:,:,:,:,idx);
-    net.forward({input_data});
+    net.forward({single(input_data)});
     scores(idx,:) = net.blobs('fc4').get_data()';
 end
 toc
@@ -39,11 +38,12 @@ acc = sum(acc_ex) / ncls;
 disp(['final acc is: ' num2str(acc,'%.3f')]);
 C = confusionmat(y_test,preds);
 disp(C);
-C_ratio = C ./ repmat(sum(C),[size(C,1) 1]);
-disp(C_ratio);
-colormap parula
-imagesc(C_ratio);
 
+% % Print confusion matrix heatmap
+% C_ratio = C ./ repmat(sum(C),[size(C,1) 1]);
+% disp(C_ratio);
+% colormap parula
+% imagesc(C_ratio);
 
 % % % Print each prediction
 % for i=1:N

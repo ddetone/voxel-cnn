@@ -1,4 +1,4 @@
-name: "segmentation"
+name: "segmentation_deploy_hdf5"
 layer {
   name: "data"
   type: "HDF5Data"
@@ -8,7 +8,7 @@ layer {
     phase: TRAIN
   }
   hdf5_data_param {
-    source: "../proto/two_layer_conv_scene/train.txt"
+    source: "../proto/two_layer_conv/seg/train.txt"
     batch_size: 2
   }
 }
@@ -21,7 +21,7 @@ layer {
     phase: TEST
   }
   hdf5_data_param {
-    source: "../proto/two_layer_conv_scene/test.txt"
+    source: "../proto/two_layer_conv/seg/test.txt"
     batch_size: 2
   }
 }
@@ -130,7 +130,7 @@ layer {
   }
 }
 layer {
-  name: "fc4-conv"
+  name: "fc4-conv-scene"
   type: "Convolution"
   bottom: "fc3-conv"
   top: "fc4-conv"
@@ -166,14 +166,3 @@ layer {
     pad: 0
   }
 }
-# layer {
-#   type: 'SoftmaxWithLoss'
-#   name: 'loss'
-#   top: 'loss'
-#   bottom: 'upscore'
-#   bottom: 'label'
-#   loss_param {
-#     ignore_label: 0
-#     normalize: false
-#   }
-# }

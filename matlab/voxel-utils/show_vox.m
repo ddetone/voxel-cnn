@@ -1,4 +1,4 @@
-function show_vox( vox , num_labels )
+function show_vox( vox , num_labels, scene_labels)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,12 +11,11 @@ function show_vox( vox , num_labels )
     if colored == false
         [X,Y,Z]=ind2sub(size(vox),find(vox(:)));
         plot3(X,Y,Z,'.');
-        axis equal;
+        axis([0 size(vox,1) 0 size(vox,2) 0 size(vox,3)]);
         xlabel('x');
         ylabel('y');
         zlabel('z');
     else
-        clf
         clrs = colormap(jet(num_labels));
         hold off
         for i = 1:num_labels
@@ -24,20 +23,20 @@ function show_vox( vox , num_labels )
             [X,Y,Z]=ind2sub(size(v),find(v(:)));
             plot3(X,Y,Z,'.','Color',clrs(i,:));
             hold on
+            axis([0 size(vox,1) 0 size(vox,2) 0 size(vox,3)]);
+            xlabel('x');
+            ylabel('y');
+            zlabel('z');
         end
-        axis equal;
-        xlabel('x');
-        ylabel('y');
-        zlabel('z');
         colorbar
         for i=1:10
             uicontrol('Style', 'text', ...
-            'String', get_class_string(i,true),... 
-            'Units','normalized',...
-            'Position', [0.91 (i/11) 0.1 0.03]); 
-end
-        hold off
+                'String', get_class_string(i-1,scene_labels),... 
+                'Units','normalized',...
+                'Position', [0.91 (i/11)-0.05 0.1 0.05]); 
+        end
     end
+    hold off
 
 end
 

@@ -1,48 +1,19 @@
-# reduce the learning rate after 8 epochs (4000 iters) by a factor of 10
-
-# # The train/test net protocol buffer definition
-# net: "../proto/two_layer_conv/fully_conv.prototxt"
-# # test_iter specifies how many forward passes the test should carry out.
-# # In the case of MNIST, we have test batch size 100 and 100 test iterations,
-# # covering the full 10,000 testing images.
-# test_iter: 2
-# # Carry out testing every 500 training iterations.
-# test_interval: 5
-# # The base learning rate, momentum and the weight decay of the network.
-# base_lr: 0.00001
-# momentum: 0.9
-# weight_decay: 0.005
-# # The learning rate policy
-# lr_policy: "step"
-# stepsize: 500
-# gamma: 0.99
-# # Display every 100 iterations
-# display: 1
-# # The maximum number of iterations
-# max_iter: 100000
-# # snapshot intermediate results
-# snapshot: 10000
-# snapshot_prefix: "../proto/two_layer_conv/snapshot/fully_conv"
-# # solver mode: CPU or GPU
-# solver_mode: CPU
-
-
-net: "../proto/two_layer_conv_scene/fully_conv.prototxt"
+net: "../proto/two_layer_conv/seg/finetune.prototxt"
 test_iter: 1
 # make test net, but don't invoke it from the solver itself
-test_interval: 1000
+test_interval: 99999
 display: 20
 average_loss: 20
 lr_policy: "fixed"
 # lr for unnormalized softmax -- see train_val definition
-base_lr: 1e-10
+base_lr: 1e-9
 # high momentum
-momentum: 0.99
+momentum: 0.98
 # no gradient accumulation
 iter_size: 1
-max_iter: 4000
+max_iter: 10000
 weight_decay: 0.0005
-snapshot: 1000
-snapshot_prefix: "../proto/two_layer_conv_scene/snapshot/"
+snapshot: 250
+snapshot_prefix: "../proto/two_layer_conv/seg/snapshot/finetune"
 test_initialization: false
 solver_mode: GPU

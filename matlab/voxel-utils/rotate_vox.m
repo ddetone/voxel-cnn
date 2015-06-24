@@ -1,10 +1,9 @@
-function [Vox_rot] = rotate_vox(Vox, rotX, rotY, rotZ, display)
+function [Vox_rot] = rotate_vox(Vox, rot, tr, sc, display)
 
+    rotX = rot.X;
+    rotY = rot.Y;
+    rotZ = rot.Z;
     rotZ = rotZ - 90; %TODO: fix offset z hack
-
-    if nargin < 5
-        display = false;
-    end
     
     dim = size(Vox,1);
 
@@ -23,19 +22,31 @@ function [Vox_rot] = rotate_vox(Vox, rotX, rotY, rotZ, display)
     end
 
     mask = mask - dim/2;
-    Rz = [ cosd(rotZ) -sind(rotZ)  0          ;
-           sind(rotZ)  cosd(rotZ)  0          ;
-           0           0           1          ;];
-    Ry = [ cosd(rotY)  0           sind(rotY) ;
-           0           1           0          ;
-          -sind(rotY)  0           cosd(rotY) ;];
-    Rx = [ 1           0           0          ;
-           0           cosd(rotX) -sind(rotX) ;
-           0           sind(rotX)  cosd(rotX) ;];
-
-    mask = round(Rx*Ry*Rz*mask);
+    mask(4,:) = 1;
+    Rz = [ cosd(rotZ) -sind(rotZ)  0           0     ;
+           sind(rotZ)  cosd(rotZ)  0           0     ;
+           0           0           1           0     ;
+           0           0           0           1     ;];
+    Ry = [ cosd(rotY)  0           sind(rotY)  0     ;
+           0           1           0           0     ;
+          -sind(rotY)  0           cosd(rotY)  0     ;
+           0           0           0           1     ;];
+    Rx = [ 1           0           0           0     ;
+           0           cosd(rotX) -sind(rotX)  0     ;
+           0           sind(rotX)  cosd(rotX)  0     ;
+           0           0           0           1     ;];
+    S  = [sc           0           0           0     ;
+          0            sc          0           0     ;
+          0            0           sc          0     ;
+          0            0           0           1     ;];
+    T  = [1            0           0           tr.X  ;
+          0            1           0           tr.Y  ;
+          0            0           1           tr.Z  ;
+          0            0           0           1     ;];         
+    mask = T*Rx*Ry*Rz*S*mask;
+    mask = mask ./ repmat(mask(4,:),[4 1]);
+    mask = round(mask);
     mask = mask + dim/2;
-    % mask = round(R*mask);
     Vox_rot = zeros(dim,dim,dim);
     for i=1:dim
         for j=1:dim

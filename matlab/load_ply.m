@@ -1,4 +1,4 @@
-scene = '04';
+scene = '05';
 
 % Load scene
 Elements = ply_read(['../data/rgbd-scenes-v2/pc/' scene '_rot.ply']);

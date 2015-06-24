@@ -1,4 +1,4 @@
-name: "recognition"
+name: "segmentation"
 layer {
   name: "data"
   type: "HDF5Data"
@@ -8,8 +8,8 @@ layer {
     phase: TRAIN
   }
   hdf5_data_param {
-    source: "../proto/two_layer_conv/rec/train.txt"
-    batch_size: 50
+    source: "../proto/two_layer_conv/seg/train.txt"
+    batch_size: 2
     shuffle: true
   }
 }
@@ -22,8 +22,8 @@ layer {
     phase: TEST
   }
   hdf5_data_param {
-    source: "../proto/two_layer_conv/rec/test.txt"
-    batch_size: 50
+    source: "../proto/two_layer_conv/seg/test.txt"
+    batch_size: 1
     shuffle: true
   }
 }
@@ -33,15 +33,17 @@ layer {
   bottom: "data"
   top: "conv1"
   param {
-    lr_mult: 1
+    lr_mult: 0
+    decay_mult: 1
   }
   param {
-    lr_mult: 2
-}
+    lr_mult: 0
+    decay_mult: 0
+  }
   convolution_param {
     num_output: 32
-    pad: 1
     kernel_size: 3
+    pad: 7
     stride: 1
     weight_filler {
       type: "gaussian"
@@ -75,15 +77,17 @@ layer {
   bottom: "pool1"
   top: "conv2"
   param {
-    lr_mult: 1
+    lr_mult: 0
+    decay_mult: 1
   }
   param {
-    lr_mult: 2
-}
+    lr_mult: 0
+    decay_mult: 0
+  }
   convolution_param {
     num_output: 64
-    pad: 1
     kernel_size: 3
+    pad: 1
     stride: 1
     weight_filler {
       type: "gaussian"
@@ -112,21 +116,26 @@ layer {
   }
 }
 layer {
-  name: "fc3"
-  type: "InnerProduct"
+  name: "fc3-conv"
+  type: "Convolution"
   bottom: "pool2"
-  top: "fc3"
+  top: "fc3-conv"
   param {
-    lr_mult: 1
+    lr_mult: 0
+    decay_mult: 1
   }
   param {
-    lr_mult: 2
+    lr_mult: 0
+    decay_mult: 0
   }
-  inner_product_param {
+  convolution_param {
     num_output: 64
+    kernel_size: 5
+    pad: 0
+    stride: 1
     weight_filler {
       type: "gaussian"
-      std: 0.1
+      std: 0.01
     }
     bias_filler {
       type: "constant"
@@ -134,59 +143,68 @@ layer {
   }
 }
 layer {
-  name: "relu3"
-  type: "ReLU"
-  bottom: "fc3"
-  top: "fc3"
-}
-layer {
-  name: "drop3"
-  type: "Dropout"
-  bottom: "fc3"
-  top: "fc3"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
-layer {
-  name: "fc4"
-  type: "InnerProduct"
-  bottom: "fc3"
-  top: "fc4"
+  name: "fc4-conv-scene"
+  type: "Convolution"
+  bottom: "fc3-conv"
+  top: "fc4-conv"
   param {
     lr_mult: 1
+    decay_mult: 1
   }
   param {
     lr_mult: 2
+    decay_mult: 0
   }
-  inner_product_param {
+  convolution_param {
     num_output: 10
+    kernel_size: 1
+    pad: 0
+    stride: 1
     weight_filler {
       type: "gaussian"
-      std: 0.1
+      std: 0.01
     }
     bias_filler {
       type: "constant"
     }
   }
 }
+# interpolate
 layer {
-  name: "loss_softmax"
-  type: "SoftmaxWithLoss"
-  bottom: "fc4"
-  bottom: "label"
-  top: "loss"
-  include {
-    phase: TRAIN
+  name: "upscore"
+  type: "Deconvolution"
+  bottom: "fc4-conv"
+  top: "upscore"
+  param {
+    lr_mult: 0
+  }
+  convolution_param {
+    num_output: 10
+    bias_term: false
+    kernel_size: 8
+    stride: 4
+    pad: 0
   }
 }
+# layer {
+#   type: 'HingeLossLayer'
+#   name: 'loss'
+#   top: 'loss'
+#   bottom: 'upscore'
+#   bottom: 'label'
+#   loss_param {
+#     ignore_label: -1
+#     normalize: false
+#   }
+# }
 layer {
-  name: "accuracy"
-  type: "Accuracy"
-  bottom: "fc4"
-  bottom: "label"
-  top: "acc"
-  include {
-    phase: TEST
+  type: 'SoftmaxWithLoss'
+  name: 'loss'
+  top: 'loss'
+  bottom: 'upscore'
+  bottom: 'label'
+  loss_param {
+    ignore_label: -1
+    normalize: false
   }
 }

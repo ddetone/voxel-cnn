@@ -1,12 +1,17 @@
-load('scenes.mat');
+scene = 'scenes_mini.mat';
+load(['scene_data/' scene]);
 
-split = 0.5;
-Ntr = floor(size(X,4)*split);
+Y = Y - 1;
+% Y(Y==9) = -1;
 
-X_train = X(:,:,:,1:Ntr);
-Y_train = Y(:,:,:,1:Ntr);
-X_test = X(:,:,:,Ntr+1:end);
-Y_test = Y(:,:,:,Ntr+1:end);
+N = size(X,4);
+tr_idx = 1:2:N;
+te_idx = 2:2:N;
+
+X_train = X(:,:,:,tr_idx);
+Y_train = Y(:,:,:,tr_idx);
+X_test = X(:,:,:,te_idx);
+Y_test = Y(:,:,:,te_idx);
 
 % Transpose so N x C x H x W x D (to add a C dim)
 X_train = permute(X_train, [4 5 1 2 3]);

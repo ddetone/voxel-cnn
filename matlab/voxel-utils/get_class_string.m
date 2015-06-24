@@ -26,26 +26,24 @@ if ~scene
 else
     switch idx
         case 0
-            cl = 'air';
-        case 1
             cl = 'bowl';
-        case 2
+        case 1
             cl = 'cap';
-        case 3
+        case 2
             cl = 'cereal_box';
-        case 4
+        case 3
             cl = 'coffee_mug';
-        case 5
+        case 4
             cl = 'coffee_table';
-        case 6
+        case 5
             cl = 'office_chair';
-        case 7
+        case 6
             cl = 'soda_can';
-        case 8
+        case 7
             cl = 'sofa';
-        case 9
+        case 8
             cl = 'table';
-        case 10
+        case 9
             cl = 'background';
     end
 end

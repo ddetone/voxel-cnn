@@ -31,15 +31,15 @@ layer {
   bottom: "data"
   top: "conv1_1"
   param {
-    lr_mult: 1
+    lr_mult: 0
   }
   param {
-    lr_mult: 2
+    lr_mult: 0
 }
   convolution_param {
     num_output: 32
-    pad: 1
     kernel_size: 3
+    pad: 7
     stride: 1
     weight_filler {
       type: "gaussian"
@@ -62,10 +62,10 @@ layer {
   bottom: "conv1_1"
   top: "conv1_2"
   param {
-    lr_mult: 1
+    lr_mult: 0
   }
   param {
-    lr_mult: 2
+    lr_mult: 0
 }
   convolution_param {
     num_output: 32
@@ -104,10 +104,10 @@ layer {
   bottom: "pool1"
   top: "conv2_1"
   param {
-    lr_mult: 1
+    lr_mult: 0
   }
   param {
-    lr_mult: 2
+    lr_mult: 0
 }
   convolution_param {
     num_output: 64
@@ -135,10 +135,10 @@ layer {
   bottom: "conv2_1"
   top: "conv2_2"
   param {
-    lr_mult: 1
+    lr_mult: 0
   }
   param {
-    lr_mult: 2
+    lr_mult: 0
 }
   convolution_param {
     num_output: 64
@@ -178,21 +178,26 @@ layer {
   top: "fc3-conv"
   param {
     lr_mult: 0
-    decay_mult: 1
   }
   param {
     lr_mult: 0
-    decay_mult: 0
   }
   convolution_param {
     num_output: 64
     kernel_size: 5
     pad: 0
     stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
   }
 }
 layer {
-  name: "fc4-conv"
+  name: "fc4-conv-scene"
   type: "Convolution"
   bottom: "fc3-conv"
   top: "fc4-conv"
@@ -209,6 +214,13 @@ layer {
     kernel_size: 1
     pad: 0
     stride: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
   }
 }
 # interpolate
@@ -228,14 +240,14 @@ layer {
     pad: 0
   }
 }
-# layer {
-#   type: 'SoftmaxWithLoss'
-#   name: 'loss'
-#   top: 'loss'
-#   bottom: 'upscore'
-#   bottom: 'label'
-#   loss_param {
-#     ignore_label: 0
-#     normalize: false
-#   }
-# }
+layer {
+  type: 'SoftmaxWithLoss'
+  name: 'loss'
+  top: 'loss'
+  bottom: 'upscore'
+  bottom: 'label'
+  loss_param {
+    # ignore_label: 0
+    normalize: false
+  }
+}

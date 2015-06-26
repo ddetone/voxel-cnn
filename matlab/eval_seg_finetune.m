@@ -1,24 +1,30 @@
 caffe.reset_all()
-CAFFE = '../caffe';
-addpath([CAFFE '/matlab/caffe']);
 caffe.set_mode_gpu();
 caffe.set_device(0);
 
 NET = 'two_layer_conv';
-WEIGHTS = 'finetune_iter_10000.caffemodel';
-model_file = ['../proto/' NET '/seg/finetune_deploy.prototxt'];
-weights_file = ['../proto/' NET '/seg/snapshot/' WEIGHTS];
+SEG_TYPE = 'fc4';
+ITER = '3000';
+WEIGHTS = ['finetune_iter_' ITER '.caffemodel'];
+
+model_file = ['../proto/' NET '/seg-' SEG_TYPE '/finetune_deploy.prototxt'];
+weights_file = ['../proto/' NET '/seg-' SEG_TYPE '/snapshot/' WEIGHTS];
 net = caffe.Net(model_file, weights_file, 'test');
 
-load(['scene_data/' '02_data.mat']);
-rot.X = 0; rot.Y = 0; rot.Z = 45;
-tr.X = 0; tr.Y = 0; tr.Z = 0;
-sc = 0.8;
-vox = rotate_vox(vox,rot,tr,sc,true);
-input_data = permute(vox, [4 5 1 2 3]);
-input_data = repmat(input_data,[2 1 1 1 1]);
-input_data = permute(input_data, [5 4 3 2 1]);
-% input_data = permute(vox, [3 2 1]); %permute for caffe
+% load(['scene_data/' '02_data.mat']);
+% rot.X = 0; rot.Y = 0; rot.Z = 45;
+% tr.X = 0; tr.Y = 0; tr.Z = 0;
+% sc = 0.8;
+% vox = rotate_vox(vox,rot,tr,sc,false);
+% input_data = permute(vox, [4 5 1 2 3]);
+% input_data = repmat(input_data,[2 1 1 1 1]);
+% input_data = permute(input_data, [5 4 3 2 1]);
+
+scene = 8;
+load('scene_data/scenes.mat');
+vox = X(:,:,:,scene);
+y = Y(:,:,:,scene);
+input_data = permute(vox, [3 2 1]); %permute for caffe
 
 tic
 scores = net.forward({input_data});

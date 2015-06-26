@@ -1,53 +1,48 @@
-name: "segmentation"
-layer {
-  name: "data"
-  type: "HDF5Data"
-  top: "data"
-  top: "label"
-  include {
-    phase: TRAIN
-  }
-  hdf5_data_param {
-    source: "../proto/two_layer_conv/seg/train.txt"
-    batch_size: 2
-  }
-}
-layer {
-  name: "data"
-  type: "HDF5Data"
-  top: "data"
-  top: "label"
-  include {
-    phase: TEST
-  }
-  hdf5_data_param {
-    source: "../proto/two_layer_conv/seg/test.txt"
-    batch_size: 2
-  }
+name: "segmentation-deploy"
+# layer {
+#   name: "data"
+#   type: "HDF5Data"
+#   top: "data"
+#   top: "label"
+#   include {
+#     phase: TRAIN
+#   }
+#   hdf5_data_param {
+#     source: "../proto/two_layer_conv/seg-fc2/train.txt"
+#     batch_size: 2
+#   }
+# }
+# layer {
+#   name: "data"
+#   type: "HDF5Data"
+#   top: "data"
+#   top: "label"
+#   include {
+#     phase: TEST
+#   }
+#   hdf5_data_param {
+#     source: "../proto/two_layer_conv/seg-fc2/test.txt"
+#     batch_size: 2
+#   }
+# }
+input: "data"
+input_shape {
+  dim: 1
+  dim: 1
+  dim: 80
+  dim: 80
+  dim: 80
 }
 layer {
   name: "conv1"
   type: "Convolution"
   bottom: "data"
   top: "conv1"
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
   convolution_param {
     num_output: 32
     kernel_size: 3
     pad: 7
     stride: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-    }
   }
 }
 layer {
@@ -72,24 +67,11 @@ layer {
   type: "Convolution"
   bottom: "pool1"
   top: "conv2"
-  param {
-    lr_mult: 0
-  }
-  param {
-    lr_mult: 0
-  }
   convolution_param {
     num_output: 64
     kernel_size: 3
     pad: 1
     stride: 1
-    weight_filler {
-      type: "gaussian"
-      std: 0.01
-    }
-    bias_filler {
-      type: "constant"
-    }
   }
 }
 layer {
@@ -114,14 +96,6 @@ layer {
   type: "Convolution"
   bottom: "pool2"
   top: "fc3-conv"
-  param {
-    lr_mult: 0
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 0
-    decay_mult: 0
-  }
   convolution_param {
     num_output: 64
     kernel_size: 5
@@ -136,23 +110,16 @@ layer {
     }
   }
 }
+# 1x1 conv to predict classes
 layer {
   name: "fc4-conv"
   type: "Convolution"
   bottom: "fc3-conv"
   top: "fc4-conv"
-  param {
-    lr_mult: 1
-    decay_mult: 1
-  }
-  param {
-    lr_mult: 2
-    decay_mult: 0
-  }
   convolution_param {
     num_output: 10
     kernel_size: 1
-    pad: 0
+    pad: 2
     stride: 1
     weight_filler {
       type: "gaussian"
@@ -163,20 +130,63 @@ layer {
     }
   }
 }
-# interpolate
+# 2x upsample
 layer {
-  name: "upscore"
+  name: "upsample-fc4-conv"
   type: "Deconvolution"
   bottom: "fc4-conv"
-  top: "upscore"
+  top: "upsample-fc4-conv"
   param {
     lr_mult: 0
   }
   convolution_param {
     num_output: 10
     bias_term: false
-    kernel_size: 8
-    stride: 4
-    pad: 0
+    kernel_size: 4
+    stride: 2
+    pad: 1
+  }
+}
+# 1x1 conv to predict classes
+layer {
+  name: "score-pool1"
+  type: "Convolution"
+  bottom: "pool1"
+  top: "score-pool1"
+  convolution_param {
+    num_output: 10
+    kernel_size: 1
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+    }
+  }
+}
+layer {
+  name: "fuse"
+  type: "Eltwise"
+  bottom: "upsample-fc4-conv"
+  bottom: "score-pool1"
+  top: "fuse"
+  eltwise_param {
+    operation: SUM
+  }
+}
+layer {
+  name: "upsample-fuse"
+  type: "Deconvolution"
+  bottom: "fuse"
+  top: "upsample-fuse"
+  param {
+    lr_mult: 0
+  }
+  convolution_param {
+    num_output: 10
+    bias_term: false
+    kernel_size: 4
+    stride: 2
   }
 }

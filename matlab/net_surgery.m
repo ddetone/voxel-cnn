@@ -1,51 +1,47 @@
 caffe.reset_all()
-clear all
 caffe.set_mode_gpu();
 caffe.set_device(0);
 
 NET = 'two_layer_conv';
+SEG_TYPE = 'fc4';
 WEIGHTS = 'dim20_iter_5000.caffemodel';
 
 rec_weights = ['../proto/' NET '/rec/snapshot/' WEIGHTS];
-recog_file = ['../proto/' NET '/rec/train_test.prototxt'];
-s_net = caffe.Net(recog_file, rec_weights, 'test');
-seg_file = ['../proto/' NET '/seg/net_surgery.prototxt'];
-fc_net = caffe.Net(seg_file, rec_weights, 'test');
-
-p_s.fc3.weights = s_net.params('fc3',1).get_data();
-p_s.fc3.bias = s_net.params('fc3',2).get_data();
-p_s.fc4.weights = s_net.params('fc4',1).get_data();
-p_s.fc4.bias = s_net.params('fc4',2).get_data();
-
-p_fc.fc3_conv.weights = fc_net.params('fc3-conv',1).get_data();
-p_fc.fc3_conv.bias = fc_net.params('fc3-conv',2).get_data();
-p_fc.fc4_conv.weights = fc_net.params('fc4-conv',1).get_data();
-p_fc.fc4_conv.bias = fc_net.params('fc4-conv',2).get_data();
+rec_file = ['../proto/' NET '/rec/train_test.prototxt'];
+rec_net = caffe.Net(rec_file, rec_weights, 'test');
+seg_file = ['../proto/' NET '/seg-' SEG_TYPE '/net_surgery.prototxt'];
+seg_net = caffe.Net(seg_file, rec_weights, 'test');
 
 % transplant fully-connected layer weights in fully convolutional
-p_fc.fc3_conv.weights(:) = p_s.fc3.weights(:);
-p_fc.fc3_conv.bias(:) = p_s.fc3.bias(:);
-fc_net.params('fc3-conv',1).set_data(p_fc.fc3_conv.weights);
-p_fc.fc4_conv.weights(:) = p_s.fc4.weights(:);
-p_fc.fc4_conv.bias(:) = p_s.fc4.bias(:);
-fc_net.params('fc4-conv',1).set_data(p_fc.fc4_conv.weights);
+fc.weights = rec_net.params('fc3',1).get_data();
+fc.bias = rec_net.params('fc3',2).get_data();
+fc_conv.weights = seg_net.params('fc3-conv',1).get_data();
+fc_conv.bias = seg_net.params('fc3-conv',2).get_data();
+fc_conv.weights(:) = fc.weights(:);
+fc_conv.bias(:) = fc.bias(:);
+seg_net.params('fc3-conv',1).set_data(fc_conv.weights);
 
-% transplant into upscore layer
-p_fc.upscore = fc_net.params('upscore',1).get_data();
-F = size(p_fc.upscore, 1);
-Cin = size(p_fc.upscore, 4);
-Cout = size(p_fc.upscore, 5);
-bifilt = upsample_filt(F);
-bifilt = single(bifilt);
-if Cin ~= Cout
-    disp('error');
-else
-    for i=1:Cin
-       p_fc.upscore(:,:,:,i,i) = bifilt; 
+% transplant bilinear filters into upscore layers
+for l = 1:size(seg_net.layer_names,1)
+    layer = seg_net.layer_names{l};
+    if strfind(layer,'upsample')
+        upsample_layer = seg_net.params(layer,1).get_data();
+        F = size(upsample_layer, 1);
+        Cin = size(upsample_layer, 4);
+        Cout = size(upsample_layer, 5);
+        bifilt = upsample_filt(F);
+        bifilt = single(bifilt);
+        if Cin ~= Cout
+            disp('error');
+        else
+            for i=1:Cin
+               p_fc.upsample(:,:,:,i,i) = bifilt; 
+            end
+        end
+        seg_net.params(layer, 1).set_data(upsample_layer);
     end
 end
-fc_net.params('upscore', 1).set_data(p_fc.upscore);
 
 % Save the net
-out_weights_file = ['../proto/' NET '/seg/snapshot/net_surgery.caffemodel'];
-fc_net.save(out_weights_file);
+out_weights_file = ['../proto/' NET '/seg-' SEG_TYPE '/snapshot/net_surgery.caffemodel'];
+seg_net.save(out_weights_file);

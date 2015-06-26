@@ -1,0 +1,19 @@
+net: "../proto/two_layer_conv/seg-fc4/finetune.prototxt"
+test_iter: 1
+# make test net, but don't invoke it from the solver itself
+test_interval: 99999
+display: 20
+average_loss: 20
+lr_policy: "fixed"
+# lr for unnormalized softmax -- see train_val definition
+base_lr: 1e-9
+# high momentum
+momentum: 0.98
+# no gradient accumulation
+iter_size: 1
+max_iter: 10000
+weight_decay: 0.0005
+snapshot: 1000
+snapshot_prefix: "../proto/two_layer_conv/seg-fc4/snapshot/finetune"
+test_initialization: false
+solver_mode: GPU

@@ -1,8 +1,7 @@
-scene = 'scenes_mini.mat';
+scene = 'scenes.mat';
 load(['scene_data/' scene]);
 
 Y = Y - 1;
-% Y(Y==9) = -1;
 
 N = size(X,4);
 tr_idx = 1:2:N;
@@ -26,10 +25,14 @@ X_test = permute(X_test, [5 4 3 2 1]);
 Y_test = permute(Y_test, [5 4 3 2 1]);
 
 % Print out sizes
-display('Size of Training set: ');
-display(size(X_train));
-display('Size of Test set: ');
-display(size(X_test));
+disp('Size of Training set (X): ');
+disp(size(X_train));
+disp('Size of Training set (Y): ');
+disp(size(Y_train));
+disp('Size of Test set (X): ');
+disp(size(X_test));
+disp('Size of Test set (Y): ');
+disp(size(Y_test));
 
 dataset = 'scenes';
 

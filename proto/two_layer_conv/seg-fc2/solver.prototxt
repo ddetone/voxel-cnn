@@ -1,4 +1,4 @@
-net: "../proto/two_layer_conv/seg/finetune.prototxt"
+net: "../proto/two_layer_conv/seg-fc2/train_test.prototxt"
 test_iter: 1
 # make test net, but don't invoke it from the solver itself
 test_interval: 99999
@@ -13,7 +13,7 @@ momentum: 0.98
 iter_size: 1
 max_iter: 10000
 weight_decay: 0.0005
-snapshot: 250
-snapshot_prefix: "../proto/two_layer_conv/seg/snapshot/finetune"
+snapshot: 50
+snapshot_prefix: "../proto/two_layer_conv/seg-fc2/snapshot/finetune"
 test_initialization: false
 solver_mode: GPU

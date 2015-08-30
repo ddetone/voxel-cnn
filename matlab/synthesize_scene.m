@@ -10,15 +10,24 @@ path = '../data/uw-scenes/objects_3dwarehouse/pc/';
 cls = {'coffee_table', 'office_chair', 'sofa', 'table'};
 % s = struct([]);
 objects = struct([]);
+cls_info = zeros(size(cls,2),1);
 for i=1:size(cls,2)
     d = dir(fullfile(path,cls{i},'*.ply'));
+    cls_info(i,1) = size(d,1);
+    
     for j=1:size(d,1)
       objects(end+1,1).name = d(j).name;
       objects(end,1).cls = i;
     end
 end
 
-grid = 2;
+load('medians.mat');
+scalings = zeros(size(cls,2),1);
+for i=1:size(cls,2)
+  scalings(i) = max(medians(i,:));
+end
+
+grid = 100;
 clear scene
 scene.limx = [-grid -grid grid grid];
 scene.limy = [-grid grid grid -grid];
@@ -34,11 +43,15 @@ max_num = 10;
 num_obj = randi(max_num-min_num)+min_num;
 obj_count = 0;
 while obj_count < num_obj
-  rand_idx = randi(size(objects,1));
+  rand_cls = randi(size(cls,2));
+  rand_idx = sum(cls_info(1:rand_cls-1)) + randi(cls_info(rand_cls,1));
+  
   mdl = ply_read(fullfile(path,cls{objects(rand_idx).cls},...
       objects(rand_idx,1).name));
   v = zeros(size(mdl.vertex.x,1),3);
   v(:,1) = mdl.vertex.x; v(:,2) = mdl.vertex.y; v(:,3) = mdl.vertex.z;
+  v = v .* scalings(objects(rand_idx).cls);
+ 
   bb = get_bounding_verts(v);
   size_bb_x = abs(bb(1,1) - bb(1,3));
   size_bb_y = abs(bb(2,1) - bb(2,3));
@@ -67,7 +80,7 @@ end
 %     '.', 'Color', clrmap(scene.obj(i).cls,:));
 %   xlim([-grid grid])
 %   ylim([-grid grid])
-%   zlim([0 1.5])
+%   zlim([0 grid])
 %   hold on
 % end
 
@@ -99,5 +112,5 @@ y(idx) = labels;
 % x = x(:,:,minZ:maxZ);
 % y = y(:,:,minZ:maxZ);
 
-show_vox(y,size(cls,2),true);
+show_vox(y,size(cls,2)+1,true);
 

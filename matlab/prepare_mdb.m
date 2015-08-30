@@ -6,7 +6,7 @@ mdb.class = zeros(0,1);
 clip_cls = 25;
 train_count = 0;
 
-visualize = false;
+visualize = true;
 augment_data = false;
 
 % Data augmentation parameters
@@ -21,7 +21,7 @@ aug.tmax = 0.10*dim; %translate randomly btwn (-tmax*dim)-(tmax*dim) [unif]
 mdb.meta.set_names = containers.Map({'train', 'test'}, {0, 1});
 mdb.meta.class_names = containers.Map;
 
-mdlnetdir = '../data/ModelNet10';
+mdlnetdir = '../data/ModelNet40';
 rawDataDir = dir(mdlnetdir);
 count = 0;
 for class = rawDataDir'
@@ -94,7 +94,7 @@ for class = rawDataDir'
                     mdb.set(end+1,1) = mdb.meta.set_names(set.name);
                     mdb.class(end+1,1) = mdb.meta.class_names(class.name);
                     count = count + 1;
-                    
+                         
                     if visualize
                         figure(1)
                         show_vox(volume);

@@ -16,7 +16,7 @@ function show_vox( vox , num_labels, scene_labels)
         ylabel('y');
         zlabel('z');
     else
-        clrs = colormap(jet(num_labels));
+        clrs = colormap(parula(num_labels));
         hold off
         for i = 1:num_labels
             v = (vox == i);
@@ -28,13 +28,13 @@ function show_vox( vox , num_labels, scene_labels)
             ylabel('y');
             zlabel('z');
         end
-        colorbar
-        for i=1:10
-            uicontrol('Style', 'text', ...
-                'String', get_class_string(i-1,scene_labels),... 
-                'Units','normalized',...
-                'Position', [0.91 (i/11)-0.05 0.1 0.05]); 
-        end
+%         colorbar
+%         for i=1:10
+%             uicontrol('Style', 'text', ...
+%                 'String', get_class_string(i-1,scene_labels),... 
+%                 'Units','normalized',...
+%                 'Position', [0.91 (i/11)-0.05 0.1 0.05]); 
+%         end
     end
     hold off
 

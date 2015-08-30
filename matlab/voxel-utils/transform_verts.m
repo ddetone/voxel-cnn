@@ -1,9 +1,16 @@
-function [v_aug] = transform_verts(v, rt, tr, sc)
+function [v_aug, bb_aug] = transform_verts(v, bb, rt, tr, sc)
+
+
+  Rbb = [ cosd(rt.Z) -sind(rt.Z)  ;
+          sind(rt.Z)  cosd(rt.Z)  ];
+  Sbb = [ sc  0 ;
+          0   sc];
+  bb_aug = Rbb*Sbb*bb;
+  bb_aug = bb_aug + repmat([tr.X; tr.Y], [1 4]);
+
 
 %     rt.Z = rt.Z - 90; %TODO: fix offset z hack
-    
 %     dim = size(v,2);
-
 %     xgrid = repmat(meshgrid(1:dim), [1 1 dim]);
 %     ygrid = repmat(meshgrid(1:dim)', [1 1 dim]);
 %     zgrid = permute(repmat(meshgrid(1:dim), [1 1 dim]), [3 1 2]);
@@ -17,10 +24,9 @@ function [v_aug] = transform_verts(v, rt, tr, sc)
 %             end
 %         end
 %     end
-
 %     mask = mask - dim/2;
 %     mask(4,:) = 1;
-    v_aug = v;
+    v_aug = v';
     v_aug(4,:) = 1;
     Rz = [ cosd(rt.Z) -sind(rt.Z)  0           0     ;
            sind(rt.Z)  cosd(rt.Z)  0           0     ;
@@ -45,6 +51,7 @@ function [v_aug] = transform_verts(v, rt, tr, sc)
     v_aug = T*Rx*Ry*Rz*S*v_aug;
     v_aug = v_aug ./ repmat(v_aug(4,:),[4 1]);
     v_aug(4,:) = [];
+    v_aug = v_aug';
 %     v = round(v);
 %     v = v + dim/2;
 %     Vox_rot = zeros(dim,dim,dim);
